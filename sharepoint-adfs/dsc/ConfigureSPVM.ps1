@@ -18,7 +18,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, xPendingReboot
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -494,7 +494,7 @@ configuration ConfigureSPVM
                 DependsOn = "[SPFarmSolution]InstallLdapcp"
             }
 
-            xPendingReboot RebootBeforeCreatingSPTrust
+            PendingReboot RebootBeforeCreatingSPTrust
             {
                 Name             = "BeforeCreatingSPTrust"
                 SkipCcmClientSDK = $true
@@ -508,15 +508,15 @@ configuration ConfigureSPVM
             Description                  = "Federation with $DomainFQDN"
             Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            IdentifierClaim              = "https://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
             ClaimsMappings               = @(
                 MSFT_SPClaimTypeMapping{
                     Name = "Email"
-                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                    IncomingClaimType = "https://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
                 }
                 MSFT_SPClaimTypeMapping{
                     Name = "Role"
-                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                    IncomingClaimType = "https://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
@@ -538,13 +538,13 @@ configuration ConfigureSPVM
 				$config = [ldapcp.LDAPCPConfig]::CreateConfiguration([ldapcp.ClaimsProviderConstants]::CONFIG_ID, [ldapcp.ClaimsProviderConstants]::CONFIG_NAME, $using:DomainFQDN);
 
 				# Remove unused claim types
-				$config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")
-				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
-				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
+				$config.ClaimTypes.Remove("https://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")
+				$config.ClaimTypes.Remove("https://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
+				$config.ClaimTypes.Remove("https://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
 
 				# Configure augmentation
 				$config.EnableAugmentation = $true
-				$config.MainGroupClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+				$config.MainGroupClaimType = "https://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 foreach ($connection in $config.LDAPConnectionsProp) {
                     $connection.EnableAugmentation = $true
                 }
@@ -1267,7 +1267,7 @@ function Get-SPDSCInstalledProductVersion
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
 
-Install-Module -Name xPendingReboot
+Install-Module -Name PendingReboot
 help ConfigureSPVM
 
 $DomainAdminCreds = Get-Credential -Credential "yvand"
